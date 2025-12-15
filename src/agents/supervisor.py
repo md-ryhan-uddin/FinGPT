@@ -33,6 +33,8 @@ def create_supervisor_node(llm: ChatOpenAI):
         "- For calculations (returns, volatility, comparisons, correlations), use 'quant_analyst'.\n"
         "- For charts and visualizations, use 'viz_specialist'.\n"
         "- Each task typically requires only ONE agent call - don't repeat calls unless necessary.\n"
+        "- If you see tool execution results or analysis, that agent has completed its work - move to FINISH.\n"
+        "- DO NOT loop back to the same agent if it has already provided results.\n"
         "- Respond with ONLY the agent name: 'researcher', 'quant_analyst', 'viz_specialist', or 'FINISH'."
     )
     

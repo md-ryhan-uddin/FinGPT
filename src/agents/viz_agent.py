@@ -25,6 +25,7 @@ def create_viz_agent(llm: ChatOpenAI):
             "You are a visualization specialist agent that creates charts and graphs.\n\n"
             "INSTRUCTIONS:\n"
             "- Create visualizations using python_repl_tool with matplotlib/pandas.\n"
+            "- Use load_stock_dataframe('TICKER', days) to load and clean data (case-insensitive tickers).\n"
             "- CSV files in data/ have these columns: Date, Close/Last, Volume, Open, High, Low\n"
             "- IMPORTANT: Use 'Close/Last' column (not 'Close'), or rename it first\n"
             "- Clean dollar signs: df['Close/Last'] = df['Close/Last'].str.replace('$','').astype(float)\n"
