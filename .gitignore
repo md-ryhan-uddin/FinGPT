@@ -50,3 +50,6 @@ Thumbs.db
 
 # Streamlit
 .streamlit/
+
+# Generated Charts
+output/
