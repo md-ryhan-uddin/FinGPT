@@ -10,25 +10,36 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 def test_stock_data():
     """Test stock data tool."""
+    import json
     from src.tools.stock_data_tool import stock_data_tool
     result = stock_data_tool.invoke({"company_ticker": "AAPL", "num_days": 7})
-    assert "Successfully executed" in result
+    data = json.loads(result)
+    assert data["success"] is True
+    assert "data" in data
     print("✅ Stock data tool works")
 
 
 def test_analysis():
     """Test analysis tool."""
+    import json
     from src.tools.analysis_tools import calculate_returns_tool
     result = calculate_returns_tool.invoke({"company_ticker": "TSLA", "num_days": 30})
-    assert "Returns Analysis" in result
+    data = json.loads(result)
+    assert data["success"] is True
+    assert "metrics" in data
     print("✅ Analysis tool works")
 
 
 def test_wikipedia():
     """Test Wikipedia tool."""
+    import json
     from src.tools.wikipedia_tool import wikipedia_tool
     result = wikipedia_tool.invoke({"query": "Tim Cook"})
     assert len(result) > 0
+    # Parse JSON to validate structure
+    data = json.loads(result)
+    assert "success" in data
+    assert "query" in data
     print("✅ Wikipedia tool works")
 
 

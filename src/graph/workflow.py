@@ -1,8 +1,11 @@
 """LangGraph workflow creation and initialization."""
 
+import logging
 from langchain_openai import ChatOpenAI
 from src.agents.supervisor import create_supervisor_graph
 import config
+
+logger = logging.getLogger(__name__)
 
 
 def create_workflow():
@@ -12,6 +15,8 @@ def create_workflow():
     Returns:
         Compiled supervisor graph ready for execution
     """
+    logger.info("[WORKFLOW] Initializing FinGPT multi-agent system...")
+    
     # Initialize language model
     llm = ChatOpenAI(
         model=config.AI_MODEL,
@@ -20,8 +25,10 @@ def create_workflow():
     )
 
     # Create supervisor graph with all agents
+    logger.info("[WORKFLOW] Creating supervisor graph with 3 specialist agents...")
     graph = create_supervisor_graph(llm)
-
+    
+    logger.info("[WORKFLOW] Multi-agent system ready!")
     return graph
 
 

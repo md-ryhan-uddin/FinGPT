@@ -1,5 +1,6 @@
 """Supervisor agent for orchestrating the multi-agent system."""
 
+import logging
 from typing import Annotated, Literal
 from typing_extensions import TypedDict
 from langchain_openai import ChatOpenAI
@@ -9,6 +10,8 @@ from langgraph.checkpoint.memory import MemorySaver
 from src.agents.research_agent import create_research_agent
 from src.agents.quant_agent import create_quant_agent
 from src.agents.viz_agent import create_viz_agent
+
+logger = logging.getLogger(__name__)
 
 
 # Define the supervisor routing function
@@ -39,9 +42,14 @@ def create_supervisor_node(llm: ChatOpenAI):
     )
     
     def supervisor_node(state: SupervisorState):
+        logger.info("[SUPERVISOR] Routing decision requested")
+        logger.debug(f"[SUPERVISOR] Current state has {len(state['messages'])} messages")
+        
         messages = [SystemMessage(content=system_prompt)] + state["messages"]
         response = llm.invoke(messages)
         next_agent = response.content.strip().lower()
+        
+        logger.info(f"[SUPERVISOR] Raw LLM response: '{next_agent}'")
         
         # Map agent names
         if "researcher" in next_agent:
@@ -54,7 +62,8 @@ def create_supervisor_node(llm: ChatOpenAI):
             next_agent = "FINISH"
         else:
             next_agent = "FINISH"
-            
+        
+        logger.info(f"[SUPERVISOR] Routing to: {next_agent}")
         return {"next": next_agent}
     
     return supervisor_node
@@ -73,6 +82,8 @@ def create_supervisor_graph(llm: ChatOpenAI):
     Returns:
         Compiled supervisor graph with checkpointer
     """
+    logger.info("[SUPERVISOR] Creating supervisor graph")
+    
     # Create specialist agents
     research_agent = create_research_agent(llm)
     quant_agent = create_quant_agent(llm)
@@ -80,6 +91,25 @@ def create_supervisor_graph(llm: ChatOpenAI):
     
     # Create supervisor node
     supervisor_node = create_supervisor_node(llm)
+    
+    # Wrap agents with logging to show when they're invoked
+    def logged_research_agent(state):
+        logger.info("🔍 [RESEARCH_AGENT] Invoked - Gathering company information and stock data...")
+        result = research_agent.invoke(state)
+        logger.info("✓ [RESEARCH_AGENT] Completed research task")
+        return result
+    
+    def logged_quant_agent(state):
+        logger.info("📊 [QUANT_AGENT] Invoked - Performing statistical analysis...")
+        result = quant_agent.invoke(state)
+        logger.info("✓ [QUANT_AGENT] Completed quantitative analysis")
+        return result
+    
+    def logged_viz_agent(state):
+        logger.info("📈 [VIZ_AGENT] Invoked - Creating visualizations...")
+        result = viz_agent.invoke(state)
+        logger.info("✓ [VIZ_AGENT] Completed visualization task")
+        return result
 
     # Create checkpointer for conversation memory
     checkpointer = MemorySaver()
@@ -89,9 +119,11 @@ def create_supervisor_graph(llm: ChatOpenAI):
     
     # Add nodes
     workflow.add_node("supervisor", supervisor_node)
-    workflow.add_node("researcher", research_agent)
-    workflow.add_node("quant_analyst", quant_agent)
-    workflow.add_node("viz_specialist", viz_agent)
+    workflow.add_node("researcher", logged_research_agent)
+    workflow.add_node("quant_analyst", logged_quant_agent)
+    workflow.add_node("viz_specialist", logged_viz_agent)
+    
+    logger.info("[SUPERVISOR] Added 4 nodes: supervisor, researcher, quant_analyst, viz_specialist")
     
     # Add edges
     workflow.add_edge(START, "supervisor")
@@ -116,4 +148,5 @@ def create_supervisor_graph(llm: ChatOpenAI):
     # Compile the graph
     graph = workflow.compile(checkpointer=checkpointer)
 
+    logger.info("[SUPERVISOR] Supervisor graph compiled successfully with memory checkpointer")
     return graph
