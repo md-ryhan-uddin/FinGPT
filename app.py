@@ -81,8 +81,7 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 if "thread_id" not in st.session_state:
     st.session_state.thread_id = "1"
-if "chat_input_key" not in st.session_state:
-    st.session_state.chat_input_key = 0
+# Removed chat_input_key - not needed, causes input issues
 if "processing" not in st.session_state:
     st.session_state.processing = False
 if "show_reasoning" not in st.session_state:
@@ -204,8 +203,7 @@ for message in messages_to_display:
 
 # Chat input - always visible
 prompt = st.chat_input(
-    "Ask me anything about stocks... (e.g., 'Who is Tesla's CEO?')",
-    key=f"chat_input_{st.session_state.chat_input_key}"
+    "Ask me anything about stocks... (e.g., 'Who is Tesla's CEO?')"
 )
 
 # Determine what to process
@@ -438,6 +436,3 @@ if prompt:
         # Add assistant response to chat history (including any image markdown so charts persist)
         if display_text:
             st.session_state.messages.append({"role": "assistant", "content": display_text})
-        
-        # Increment chat input key to reset the input field
-        st.session_state.chat_input_key += 1
