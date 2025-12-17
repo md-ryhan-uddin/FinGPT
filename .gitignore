@@ -53,3 +53,7 @@ Thumbs.db
 
 # Generated Charts
 output/
+
+# Logs
+*.log
+fingpt.log

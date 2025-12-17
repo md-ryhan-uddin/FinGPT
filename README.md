@@ -5,9 +5,11 @@
 ![LangGraph](https://img.shields.io/badge/LangGraph-0.5.3-green.svg)
 ![Streamlit](https://img.shields.io/badge/Streamlit-Latest-red.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Tests](https://img.shields.io/badge/Tests-133%20Passing-brightgreen.svg)
+![Tests](https://img.shields.io/badge/Tests-127%20Passing-brightgreen.svg)
 
 > An intelligent multi-agent system leveraging LangGraph supervisor pattern for comprehensive financial analysis
+
+## 🚀 **[Try Live Demo →](https://fin-gpt.streamlit.app/)**
 
 ---
 

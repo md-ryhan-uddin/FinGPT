@@ -178,7 +178,29 @@ should_process_last = (st.session_state.processing and
 messages_to_display = st.session_state.messages[:-1] if should_process_last else st.session_state.messages
 for message in messages_to_display:
     with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+        content = message["content"]
+
+        # Extract image references and display them properly
+        image_pattern = r'!\[Chart\]\((output/chart_[a-f0-9]+\.png)\)'
+        images_in_message = re.findall(image_pattern, content)
+
+        # Remove image markdown from text for clean display
+        clean_content = re.sub(image_pattern, '', content)
+        clean_content = re.sub(r'\*\*Charts created:\*\*\s*', '', clean_content).strip()
+
+        # Display the text content
+        if clean_content:
+            st.markdown(clean_content)
+
+        # Display images if any exist
+        if images_in_message:
+            for img_path in images_in_message:
+                if os.path.exists(img_path):
+                    try:
+                        image = Image.open(img_path)
+                        st.image(image, use_column_width=True)
+                    except Exception as e:
+                        st.warning(f"⚠️ Could not load chart: {img_path}")
 
 # Chat input - always visible
 prompt = st.chat_input(
