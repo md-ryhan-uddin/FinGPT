@@ -1,4 +1,7 @@
-"""Python execution tool for creating visualizations and running data analysis code."""
+"""Python execution tool for creating visualizations and running data analysis code.
+
+Returns structured JSON with success, output, charts created, and error fields.
+"""
 
 import matplotlib
 
@@ -8,7 +11,12 @@ import matplotlib.pyplot as plt
 
 import contextlib
 import io
+import json
+import logging
 import os
+
+# Configure logger
+logger = logging.getLogger(__name__)
 import shutil
 import uuid
 from pathlib import Path
@@ -46,30 +54,11 @@ def _ensure_project_root() -> Path:
 
 def _ensure_data_aliases(data_dir: Path) -> None:
     """
-    Create case-insensitive aliases for CSV files so code using lowercase
-    paths (e.g., data/meta.csv) still works on case-sensitive filesystems.
+    DISABLED: Previously created case-insensitive aliases.
+    Now all tools use .upper() for consistency, so aliases not needed.
     """
-    if not data_dir.exists():
-        return
-
-    for csv_path in data_dir.glob("*.csv"):
-        alias_names = {
-            csv_path.name.lower(),
-            f"{csv_path.stem.capitalize()}{csv_path.suffix}",
-        }
-        for alias in alias_names:
-            alias_path = csv_path.with_name(alias)
-            if alias_path.exists() or alias_path == csv_path:
-                continue
-            try:
-                # Prefer lightweight symlink to avoid duplicating data
-                alias_path.symlink_to(csv_path.name)
-            except OSError:
-                # Fall back to copying if symlinks are not permitted
-                try:
-                    shutil.copyfile(csv_path, alias_path)
-                except OSError:
-                    pass
+    # Function disabled to prevent duplicate file creation
+    pass
 
 
 def load_stock_dataframe(ticker: str, days: Optional[int] = None) -> pd.DataFrame:
@@ -139,9 +128,22 @@ def python_repl_tool(
 
     Available libraries: pandas, numpy, matplotlib, seaborn
     Note: Charts will be automatically saved and displayed.
+    
+    Returns JSON with success, output text, list of chart paths, and error fields.
     """
+    logger.info(f"[PYTHON_REPL] Executing Python code ({len(code)} chars)...")
+    
+    result = {
+        "success": False,
+        "output": None,
+        "charts": [],
+        "error": None
+    }
+    
     try:
-        _ensure_project_root()
+        project_root = _ensure_project_root()
+        logger.debug(f"[PYTHON_REPL] Working directory: {project_root}")
+        
         _ensure_data_aliases(Path("data"))
 
         # Make helpers available to executed code
@@ -151,7 +153,7 @@ def python_repl_tool(
         # Reset figures from any previous run
         plt.close("all")
 
-        result = _execute_user_code(code)
+        exec_output = _execute_user_code(code)
 
         # Check if there are any matplotlib figures created
         figures = plt.get_fignums()
@@ -159,32 +161,24 @@ def python_repl_tool(
 
         if figures:
             os.makedirs("output", exist_ok=True)
+            logger.info(f"[PYTHON_REPL] Created {len(figures)} figure(s), saving to output/")
 
             for fig_num in figures:
                 fig = plt.figure(fig_num)
                 filename = f"output/chart_{uuid.uuid4().hex[:8]}.png"
                 fig.savefig(filename, dpi=100, bbox_inches="tight")
                 saved_images.append(filename)
+                logger.info(f"[PYTHON_REPL] Saved chart: {filename}")
 
             plt.close("all")
 
-            if saved_images:
-                image_info = "\n\n**Charts created:**\n" + "\n".join(
-                    [f"![Chart]({img})" for img in saved_images]
-                )
-                return (
-                    "Successfully created visualization.\n\n"
-                    "Chart saved and will be displayed to the user."
-                    + image_info
-                )
+        result["success"] = True
+        result["output"] = exec_output if exec_output and str(exec_output).strip() else None
+        result["charts"] = saved_images
+        logger.info(f"[PYTHON_REPL] Code executed successfully, {len(saved_images)} chart(s) created")
 
-        if result and str(result).strip():
-            return f"Code executed successfully.\n\nOutput:\n```\n{result}\n```"
-        else:
-            return "Code executed successfully (no output)."
+    except Exception as e:
+        logger.error(f"[PYTHON_REPL] Execution error: {e}", exc_info=True)
+        result["error"] = repr(e)
 
-    except BaseException as e:
-        return (
-            f"Failed to execute. Error: {repr(e)}\n\n"
-            "Tip: Use load_stock_dataframe('TICKER', days) to reliably load CSV data."
-        )
+    return json.dumps(result)
