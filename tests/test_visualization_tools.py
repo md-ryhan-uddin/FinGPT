@@ -2,6 +2,7 @@
 
 import sys
 import os
+import json
 import pytest
 from pathlib import Path
 import matplotlib
@@ -67,7 +68,8 @@ plt.title('Test Plot')
         result = python_repl_tool.invoke({"code": code})
         assert result is not None
         # Should create chart
-        assert "Chart" in result or "successfully" in result.lower()
+        data = json.loads(result)
+        assert data["success"] is True
 
     def test_stock_data_visualization(self):
         """Test creating stock price visualization."""

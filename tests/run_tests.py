@@ -19,7 +19,13 @@ def run_all_tests():
         "tests/test_analysis_tools.py",
         "tests/test_data_tools.py",
         "tests/test_visualization_tools.py",
+        "tests/test_wikipedia_tool.py",
         "tests/test_workflow.py",
+        "tests/test_e2e.py",
+        "tests/test_tools.py",
+        "tests/test_agents.py",
+        "tests/test_graph.py",
+        "smoke_test.py"
     ]
     
     # Run pytest with verbose output
@@ -79,7 +85,8 @@ def run_tool_tests():
         "--tb=short",
         "tests/test_analysis_tools.py",
         "tests/test_data_tools.py",
-        "tests/test_visualization_tools.py"
+        "tests/test_visualization_tools.py",
+        "tests/test_wikipedia_tool.py"
     ]
     
     return pytest.main(args)

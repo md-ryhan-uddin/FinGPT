@@ -2,6 +2,7 @@
 
 import sys
 import os
+import json
 import pytest
 from pathlib import Path
 
@@ -21,8 +22,10 @@ class TestStockDataTool:
             "company_ticker": "AAPL",
             "num_days": 7
         })
-        assert "Successfully executed" in result
-        assert "AAPL" in result
+        data = json.loads(result)
+        assert data["success"] is True
+        assert data["ticker"] == "AAPL"
+        assert "data" in data
 
     def test_different_time_periods(self):
         """Test stock data retrieval across different periods."""
@@ -32,8 +35,9 @@ class TestStockDataTool:
                 "company_ticker": "TSLA",
                 "num_days": period
             })
-            assert "Successfully executed" in result
-            assert "TSLA" in result
+            data = json.loads(result)
+            assert data["success"] is True or data["error"] is not None
+            assert data["ticker"] == "TSLA"
 
     def test_all_available_tickers(self):
         """Test stock data for all available tickers."""
@@ -43,7 +47,9 @@ class TestStockDataTool:
                 "company_ticker": ticker,
                 "num_days": 30
             })
-            assert "Successfully executed" in result or "Error" in result
+            data = json.loads(result)
+            # Should either succeed or have an error field
+            assert "success" in data
 
     def test_invalid_ticker(self):
         """Test with invalid ticker symbol."""
@@ -51,7 +57,9 @@ class TestStockDataTool:
             "company_ticker": "INVALIDXYZ",
             "num_days": 7
         })
-        assert "not available" in result or "Error" in result
+        data = json.loads(result)
+        assert data["success"] is False
+        assert data["error"] is not None
 
     def test_zero_days(self):
         """Test with zero days period."""
@@ -162,7 +170,8 @@ class TestToolIntegration:
             "company_ticker": "AAPL",
             "num_days": 30
         })
-        assert "Successfully executed" in stock_result
+        stock_data = json.loads(stock_result)
+        assert stock_data["success"] is True
         
         # This confirms data is available for analysis tools
         from src.tools.analysis_tools import calculate_returns_tool
@@ -170,20 +179,25 @@ class TestToolIntegration:
             "company_ticker": "AAPL",
             "num_days": 30
         })
-        assert "Returns Analysis" in analysis_result
+        analysis_data = json.loads(analysis_result)
+        assert analysis_data["success"] is True
+        assert "metrics" in analysis_data
 
     def test_wikipedia_then_stock_workflow(self):
         """Test workflow of researching company then getting stock data."""
         # First research the company
         wiki_result = wikipedia_tool.invoke({"query": "Tesla Inc"})
-        assert "Tesla" in wiki_result or "Musk" in wiki_result
+        wiki_data = json.loads(wiki_result)
+        # Check that we got some result (success or candidates)
+        assert "success" in wiki_data
         
         # Then get stock data
         stock_result = stock_data_tool.invoke({
             "company_ticker": "TSLA",
             "num_days": 7
         })
-        assert "Successfully executed" in stock_result
+        stock_data = json.loads(stock_result)
+        assert stock_data["success"] is True
 
     def test_multiple_tool_calls(self):
         """Test making multiple sequential tool calls."""

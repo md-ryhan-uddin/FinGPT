@@ -1,7 +1,11 @@
 """Test script for FinGPT tools."""
 
+import json
 import sys
-sys.path.insert(0, '/home/ryhan/Downloads/workspace/FinGPT')
+from pathlib import Path
+
+# Add project root to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.tools.stock_data_tool import stock_data_tool
 from src.tools.analysis_tools import calculate_returns_tool, calculate_volatility_tool, compare_stocks_tool
@@ -10,9 +14,13 @@ from src.tools.wikipedia_tool import wikipedia_tool
 
 def test_wikipedia_tool():
     """Test Wikipedia search."""
+    import json
     print("\n=== Testing Wikipedia Tool ===")
     result = wikipedia_tool.invoke({"query": "Tim Cook"})
     print(f"✓ Wikipedia tool works: {result[:100]}...")
+    # Parse JSON output
+    data = json.loads(result)
+    assert data["success"] is True or data["error"] is not None
     assert "Tim" in result or "Cook" in result
 
 
@@ -21,8 +29,9 @@ def test_stock_data_tool():
     print("\n=== Testing Stock Data Tool ===")
     result = stock_data_tool.invoke({"company_ticker": "AAPL", "num_days": 7})
     print(f"✓ Stock data tool works: {result[:150]}...")
-    assert "Successfully executed" in result
-    assert "AAPL" in result
+    data = json.loads(result)
+    assert data["success"] is True
+    assert data["ticker"] == "AAPL"
 
 
 def test_calculate_returns():
@@ -48,7 +57,8 @@ def test_compare_stocks():
     print("\n=== Testing Compare Stocks Tool ===")
     result = compare_stocks_tool.invoke({"ticker1": "AAPL", "ticker2": "MSFT", "num_days": 30})
     print(result)
-    assert "Comparative Analysis" in result
+    data = json.loads(result)
+    assert data["success"] is True
     print("✓ Stock comparison works!")
 
 

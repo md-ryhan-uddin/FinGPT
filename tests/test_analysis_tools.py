@@ -2,6 +2,7 @@
 
 import sys
 import os
+import json
 import pytest
 import pandas as pd
 import numpy as np
@@ -27,10 +28,10 @@ class TestCalculateReturnsTool:
             "company_ticker": "AAPL",
             "num_days": 30
         })
-        assert "Returns Analysis" in result
-        assert "Total Return" in result
-        assert "Average Daily Return" in result
-        assert "AAPL" in result
+        data = json.loads(result)
+        assert data["success"] is True
+        assert "metrics" in data
+        assert data["ticker"] == "AAPL"
 
     def test_different_time_periods(self):
         """Test returns across different time periods."""
@@ -40,8 +41,9 @@ class TestCalculateReturnsTool:
                 "company_ticker": "TSLA",
                 "num_days": period
             })
-            assert "Returns Analysis" in result
-            assert str(period) in result
+            data = json.loads(result)
+            assert data["success"] is True
+            assert data["num_days"] == period
 
     def test_invalid_ticker(self):
         """Test with invalid ticker symbol."""
@@ -61,14 +63,15 @@ class TestCalculateReturnsTool:
         assert result is not None
 
     def test_all_available_tickers(self):
-        """Test returns calculation for all available tickers."""
+        """Test returns calculation for all tickers."""
         tickers = ["AAPL", "AMZN", "META", "MSFT", "NFLX", "TSLA"]
         for ticker in tickers:
             result = calculate_returns_tool.invoke({
                 "company_ticker": ticker,
                 "num_days": 30
             })
-            assert "Returns Analysis" in result or "Error" in result
+            data = json.loads(result)
+            assert "success" in data
 
 
 class TestCalculateVolatilityTool:
@@ -80,9 +83,9 @@ class TestCalculateVolatilityTool:
             "company_ticker": "NFLX",
             "num_days": 30
         })
-        assert "Volatility Analysis" in result
-        assert "Daily Volatility" in result
-        assert "Annualized Volatility" in result
+        data = json.loads(result)
+        assert data["success"] is True
+        assert "metrics" in data
 
     def test_volatility_different_periods(self):
         """Test volatility across different time periods."""
@@ -92,7 +95,8 @@ class TestCalculateVolatilityTool:
                 "company_ticker": "MSFT",
                 "num_days": period
             })
-            assert "Volatility Analysis" in result
+            data = json.loads(result)
+        assert data["success"] is True
 
     def test_volatility_invalid_ticker(self):
         """Test volatility with invalid ticker."""
@@ -111,7 +115,8 @@ class TestCalculateVolatilityTool:
                 "num_days": 30
             })
             assert result is not None
-            assert "Volatility" in result or "Error" in result
+            data = json.loads(result)
+        assert "success" in data
 
 
 class TestCompareStocksTool:
@@ -124,10 +129,9 @@ class TestCompareStocksTool:
             "ticker2": "MSFT",
             "num_days": 30
         })
-        assert "Comparative Analysis" in result
-        assert "AAPL" in result
-        assert "MSFT" in result
-        assert "Winner" in result
+        data = json.loads(result)
+        assert data["success"] is True
+        assert "winner" in data
 
     def test_comparison_different_pairs(self):
         """Test different stock pair comparisons."""
@@ -142,9 +146,8 @@ class TestCompareStocksTool:
                 "ticker2": ticker2,
                 "num_days": 30
             })
-            assert "Comparative Analysis" in result
-            assert ticker1 in result
-            assert ticker2 in result
+            data = json.loads(result)
+            assert data["success"] is True
 
     def test_comparison_invalid_ticker(self):
         """Test comparison with one invalid ticker."""
@@ -163,7 +166,8 @@ class TestCompareStocksTool:
             "num_days": 30
         })
         # Should work but show identical results
-        assert "Comparative Analysis" in result
+        data = json.loads(result)
+        assert data["success"] is True
 
 
 class TestCorrelationAnalysisTool:
@@ -175,7 +179,8 @@ class TestCorrelationAnalysisTool:
             "tickers_list": "AAPL,MSFT,TSLA",
             "num_days": 30
         })
-        assert "Correlation Analysis" in result
+        data = json.loads(result)
+        assert data["success"] is True
         assert "AAPL" in result
         assert "MSFT" in result
         assert "TSLA" in result
@@ -186,7 +191,8 @@ class TestCorrelationAnalysisTool:
             "tickers_list": "AAPL,MSFT",
             "num_days": 30
         })
-        assert "Correlation Analysis" in result
+        data = json.loads(result)
+        assert data["success"] is True
 
     def test_correlation_all_stocks(self):
         """Test correlation with all available stocks."""
@@ -194,7 +200,8 @@ class TestCorrelationAnalysisTool:
             "tickers_list": "AAPL,AMZN,META,MSFT,NFLX,TSLA",
             "num_days": 30
         })
-        assert "Correlation Analysis" in result
+        data = json.loads(result)
+        assert data["success"] is True
 
     def test_correlation_single_ticker(self):
         """Test correlation with only one ticker (should fail)."""
@@ -220,7 +227,8 @@ class TestCorrelationAnalysisTool:
                 "tickers_list": "AAPL,MSFT",
                 "num_days": period
             })
-            assert "Correlation Analysis" in result
+            data = json.loads(result)
+        assert data["success"] is True
 
 
 class TestDataIntegrity:

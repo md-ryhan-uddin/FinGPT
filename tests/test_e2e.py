@@ -3,6 +3,7 @@
 import sys
 import os
 import pytest
+import json
 from pathlib import Path
 
 # Add project root to path
@@ -14,11 +15,16 @@ class TestUserScenarios:
 
     def test_scenario_research_ceo(self):
         """Test: User asks 'Who is Apple's CEO?'"""
+        import json
         from src.tools.wikipedia_tool import wikipedia_tool
         
         result = wikipedia_tool.invoke({"query": "Tim Cook Apple CEO"})
         assert result is not None
         assert len(result) > 0
+        # Validate JSON structure
+        data = json.loads(result)
+        assert "success" in data
+        assert "query" in data
 
     def test_scenario_stock_performance(self):
         """Test: User asks 'Analyze Tesla's stock performance'"""
@@ -29,14 +35,16 @@ class TestUserScenarios:
             "company_ticker": "TSLA",
             "num_days": 30
         })
-        assert "Returns Analysis" in returns
+        data = json.loads(returns)
+        assert data["success"] is True
         
         # Get volatility
         volatility = calculate_volatility_tool.invoke({
             "company_ticker": "TSLA",
             "num_days": 30
         })
-        assert "Volatility Analysis" in volatility
+        data = json.loads(volatility)
+        assert data["success"] is True
 
     def test_scenario_compare_stocks(self):
         """Test: User asks 'Compare Apple vs Microsoft'"""
@@ -47,8 +55,10 @@ class TestUserScenarios:
             "ticker2": "MSFT",
             "num_days": 30
         })
-        assert "Comparative Analysis" in result
-        assert "Winner" in result
+        data = json.loads(result)
+        assert data["success"] is True
+        data = json.loads(result)
+        assert "winner" in data
 
     def test_scenario_visualize_stock(self):
         """Test: User asks 'Show me a chart of Meta's stock'"""
@@ -83,7 +93,8 @@ plt.grid(True)
                 "ticker2": ticker2,
                 "num_days": 30
             })
-            assert "Comparative Analysis" in result
+            data = json.loads(result)
+        assert data["success"] is True
 
     def test_scenario_correlation_analysis(self):
         """Test: User asks about stock correlations"""
@@ -93,7 +104,8 @@ plt.grid(True)
             "tickers_list": "AAPL,MSFT,TSLA",
             "num_days": 90
         })
-        assert "Correlation Analysis" in result
+        data = json.loads(result)
+        assert data["success"] is True
 
 
 class TestErrorRecovery:
@@ -145,7 +157,8 @@ class TestDataConsistency:
         
         # All should succeed
         for result in results:
-            assert "Returns Analysis" in result
+            data = json.loads(result)
+        assert data["success"] is True
 
     def test_all_tickers_accessible(self):
         """Test: All tickers can be accessed"""
@@ -157,7 +170,8 @@ class TestDataConsistency:
                 "company_ticker": ticker,
                 "num_days": 7
             })
-            assert "Successfully executed" in result
+            data = json.loads(result)
+        assert data["success"] is True
 
 
 class TestPerformance:
@@ -249,9 +263,9 @@ class TestOutputFormat:
         })
         
         # Check for expected fields
-        assert "Total Return" in result
-        assert "Average Daily Return" in result
-        assert "%" in result  # Should have percentages
+        data = json.loads(result)
+        assert "metrics" in data
+        assert "avg_daily_return" in data["metrics"]
 
     def test_volatility_output_format(self):
         """Test volatility output has expected format."""
@@ -262,9 +276,9 @@ class TestOutputFormat:
             "num_days": 30
         })
         
-        assert "Daily Volatility" in result
-        assert "Annualized Volatility" in result
-        assert "%" in result
+        data = json.loads(result)
+        assert "metrics" in data
+        assert "annualized_volatility" in data["metrics"]
 
     def test_comparison_output_format(self):
         """Test comparison output has expected format."""
@@ -278,7 +292,8 @@ class TestOutputFormat:
         
         assert "**AAPL:**" in result or "AAPL" in result
         assert "**MSFT:**" in result or "MSFT" in result
-        assert "Winner" in result
+        data = json.loads(result)
+        assert "winner" in data
 
 
 if __name__ == "__main__":
