@@ -1,0 +1,13 @@
+services:
+  fingpt:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fingpt
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+    volumes:
+      - ./output:/app/output
+    restart: unless-stopped

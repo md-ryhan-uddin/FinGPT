@@ -188,6 +188,57 @@ The app will open in your browser at `http://localhost:8501`
 
 ---
 
+## 🐳 Docker Setup
+
+Run FinGPT in a container without setting up a local Python environment.
+
+### Prerequisites
+
+- Docker Desktop (or Docker Engine + Docker Compose)
+- A valid `.env` file with your API key
+
+### Option 1: Docker Compose (recommended)
+
+```bash
+# Build and start
+docker compose up --build
+```
+
+App URL: `http://localhost:8501`
+
+The compose setup:
+- Loads environment variables from `.env`
+- Persists generated charts to the local `output/` folder
+- Restarts automatically unless stopped
+
+Stop the app:
+
+```bash
+docker compose down
+```
+
+### Option 2: Plain Docker CLI
+
+```bash
+# Build image
+docker build -t fingpt:latest .
+
+# Run container
+docker run --rm -p 8501:8501 --env-file .env --name fingpt fingpt:latest
+```
+
+### Useful Docker Commands
+
+```bash
+# View logs
+docker compose logs -f
+
+# Rebuild from scratch (when dependencies change)
+docker compose build --no-cache
+```
+
+---
+
 ## 💡 Usage Examples
 
 ### Example 1: CEO Research
@@ -238,6 +289,9 @@ FinGPT/
 ├── app.py                          # Streamlit application entry point
 ├── config.py                       # Configuration and environment variables
 ├── requirements.txt                # Python dependencies
+├── Dockerfile                      # Container image definition
+├── docker-compose.yml              # Local container orchestration
+├── .dockerignore                   # Docker build context exclusions
 │
 ├── src/                            # Source code
 │   ├── agents/                     # Agent definitions
